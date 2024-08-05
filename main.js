@@ -30,14 +30,30 @@ async function generateText(input) {
 }
 
 async function generatePicture(input) {
-    const response = await client.images.generate({
+    let response, loading = true
+
+    client.images.generate({
         prompt: input,
         model: 'dall-e-3',
         size: '1024x1024',
         quality: 'hd',
         n: 1,
+    }).then((res) => {
+        response = res
+        loading = false
     })
-    
+
+    while (loading) {
+        IO.write('\r                    ')
+        IO.write('\rLoading')
+        IO.write('\rLoading.')
+        await setTimeout(500)
+        IO.write('.')
+        await setTimeout(500)
+        IO.write('.')
+        await setTimeout(500)
+    }
+
     const url = response.data[0].url
     await open(url) // launch the browser with the image
     // IO.writeLine(`Picture: ${url}`)

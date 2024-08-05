@@ -31,7 +31,7 @@ export default class IO {
      * A function that writes a message to the console one character at a time
      * @param {string} message A message to write to the console
      * @param {*} timeout A timeout to wait before writing the next character
-     * @returns {void}
+     * @returns {Promise<void>}
      */     
     static async writeRunning(message = '', timeout = 5) {
         if (!message || message.length === 0) {
