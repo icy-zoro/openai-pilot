@@ -56,7 +56,6 @@ async function generatePicture(input) {
 
     const url = response.data[0].url
     await open(url) // launch the browser with the image
-    // IO.writeLine(`Picture: ${url}`)
 
     let save = ''
     while (save !== 'y' && save !== 'n') {
@@ -64,23 +63,26 @@ async function generatePicture(input) {
             .trim()
             .toLowerCase()
     }
-    if (save === 'y') {
-        fs.mkdirSync('./pictures', { recursive: true })
-        const filename = `./pictures/${new Date().toLocaleString()}.png`
-        const stream = fs.createWriteStream(filename, {
-            flags: 'w',
-        })
-        const writableStream = new WritableStream({
-            write(chunk) {
-                stream.write(chunk)
-            },
-            close() {
-                stream.end()
-            }
-        })
-        const response = await fetch(url)
-        await response.body.pipeTo(writableStream)
-    }
+    if (save === 'n') return
+
+    const picResponse = await fetch(url)
+
+    fs.mkdirSync('./pictures', { recursive: true })
+    const filename = `./pictures/${new Date().toLocaleString()}.png`
+
+    const stream = fs.createWriteStream(filename, {
+        flags: 'w',
+    })
+    const writableStream = new WritableStream({
+        write(chunk) {
+            stream.write(chunk)
+        },
+        close() {
+            stream.end()
+        }
+    })
+
+    await picResponse.body.pipeTo(writableStream)
 }
 
 async function main() {
