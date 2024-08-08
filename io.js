@@ -1,18 +1,26 @@
 import { createInterface } from 'readline';
-import { setTimeout } from 'timers/promises';
+import { setTimeout } from 'node:timers/promises';
 
 export default class IO {
-    static #rl = createInterface({
-        input: process.stdin,
-        output: process.stdout,
-    });
+    #rl
+
+    constructor() {
+        this.#rl = createInterface({
+            input: process.stdin,
+            output: process.stdout,
+        });
+        this.#rl.on('close', () => {
+            console.log('Goodbye!')
+        })
+    }
+
 
     /**
      * A function that reads a line from the console
      * @param {string} question A prompt to put into the console
      * @returns {Promise<string>} A promise that resolves with the user's input
      */
-    static async read(question = '') {
+    async read(question = '') {
         return await new Promise((resolve) => {
             this.#rl.question(question, resolve)
         })
@@ -23,7 +31,7 @@ export default class IO {
      * @param {string} message A message to write to the console
      * @returns {void}
      */
-    static write(message = '') {
+    write(message = '') {
         process.stdout.write(message)
     }
 
@@ -33,7 +41,7 @@ export default class IO {
      * @param {*} timeout A timeout to wait before writing the next character
      * @returns {Promise<void>}
      */     
-    static async writeRunning(message = '', timeout = 5) {
+    async writeRunning(message = '', timeout = 5) {
         if (!message || message.length === 0) {
             return
         }
@@ -48,7 +56,7 @@ export default class IO {
      * @param {string} message A message to write to the console
      * @returns {void}
      */
-    static writeLine(message = '') {
+    writeLine(message = '') {
         console.log(message)
     }
 
@@ -56,7 +64,7 @@ export default class IO {
      * A function that closes the readline interface
      * @returns {void}
      */
-    static close() {
+    close() {
         this.#rl.close()
     }
 }
