@@ -1,4 +1,4 @@
-import { setTimeout } from 'timers/promises'
+import { setTimeout } from 'node:timers/promises'
 import IO from './io.js'
 import OpenAI from 'openai'
 import open from 'open'
@@ -7,6 +7,8 @@ import fs from 'fs'
 const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 })
+const io = new IO()
+const timeoutMs = 300
 
 async function generateText(input) {
     const response = await client.chat.completions.create({
@@ -23,10 +25,10 @@ async function generateText(input) {
         ],
     })
 
-    IO.write('GPT: ')
+    io.write('GPT: ')
     for await (const message of response)
-        await IO.writeRunning(message.choices[0]?.delta?.content)
-    IO.writeLine()
+        await io.writeRunning(message.choices[0]?.delta?.content)
+    io.writeLine()
 }
 
 async function generatePicture(input) {
@@ -44,14 +46,15 @@ async function generatePicture(input) {
     })
 
     while (loading) {
-        IO.write('\r                    ')
-        IO.write('\rLoading')
-        IO.write('\rLoading.')
-        await setTimeout(500)
-        IO.write('.')
-        await setTimeout(500)
-        IO.write('.')
-        await setTimeout(500)
+        io.write('\r                    ')
+        io.write('\rLoading')
+        await setTimeout(timeoutMs)
+        io.write('.')
+        await setTimeout(timeoutMs)
+        io.write('.')
+        await setTimeout(timeoutMs)
+        io.write('.')
+        await setTimeout(timeoutMs)
     }
 
     const url = response.data[0].url
@@ -59,16 +62,24 @@ async function generatePicture(input) {
 
     let save = ''
     while (save !== 'y' && save !== 'n') {
-        save = (await IO.read('Save picture? (y/n): '))
+        save = (await io.read('Save picture? (y/n): '))
             .trim()
             .toLowerCase()
     }
-    if (save === 'n') return
+    if (save === 'n') {
+        io.writeLine()
+        return
+    }
 
     const picResponse = await fetch(url)
+    const datestamp = new Date()
+        .toLocaleString()
+        .replace(/(\/|\.)/g, '-')
+        .replace(/,/g, '')
+        .replace(/ /g, '_')
 
     fs.mkdirSync('./pictures', { recursive: true })
-    const filename = `./pictures/${new Date().toLocaleString()}.png`
+    const filename = `./pictures/${datestamp}.png`
 
     const stream = fs.createWriteStream(filename, {
         flags: 'w',
@@ -91,7 +102,7 @@ async function main() {
     let input
 
     while (true) {
-        input = await IO.read('User: ')
+        input = await io.read('User: ')
         if (input === 'exit') {
             break
         }
@@ -100,7 +111,7 @@ async function main() {
         await generatePicture(input)
     }
 
-    IO.close()
+    io.close()
 }
 
 main()
